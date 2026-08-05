@@ -7,7 +7,9 @@ dependencies = [
     "pygame",
     "numpy",
     "pandas",
-    "pyyaml"
+    "pyyaml",
+    "xarray",
+    "netCDF4"
 ]
 
 [build-system]

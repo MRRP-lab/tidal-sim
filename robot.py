@@ -4,18 +4,23 @@ import pymunk
 
 import utils
 import environment
+from robot_body_builder import Robot_Body_Builder
 
 class Robot():
-    def __init__(self, filename):
+    def __init__(self, filename, width=None, height=None):
 
         # load parameters
         rconfig = utils.load_config(filename)
-        self.ss = int(rconfig["screen_size"])
-        self.env = environment.Environment(self.ss)
+        # width/height default to configs/global_config.yaml's screen_size
+        # (a square arena) unless explicitly overridden, e.g. by run_sim.py
+        # sizing the arena from GetDimension instead
+        self.width = int(width) if width is not None else int(rconfig["screen_size"])
+        self.height = int(height) if height is not None else int(rconfig["screen_size"])
+        self.env = environment.Environment(self.width)
 
         # set up coordinates
         rng = np.random.default_rng()
-        coords = rng.choice(np.arange(self.ss),size=2)
+        coords = [rng.choice(np.arange(self.width)), rng.choice(np.arange(self.height))]
         self.coords = np.array(coords, dtype=float)
         self.disp_coords = np.array(coords, dtype=int)
         self.v = rconfig["robot_vel"]
@@ -27,13 +32,8 @@ class Robot():
 
 
         # body physics
-        self.mass = 1
-        self.radius = 5
-        self.moment = pymunk.moment_for_circle(self.mass, 0, self.radius)
-        body = pymunk.Body(mass=self.mass, moment=self.moment)
-        body.position = self.coords[0], self.coords[1]
-        self.body = body
-        self.shape = pymunk.Circle(self.body, radius=self.radius)
+        builder = Robot_Body_Builder()
+        self.body, self.shape = builder.ellipse((self.coords[0], self.coords[1]))
 
     def update_state(self):
         self.coords = (self.body.position.x, self.body.position.y)

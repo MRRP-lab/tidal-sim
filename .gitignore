@@ -1,0 +1,11 @@
+# Local-only documentation, not meant to be published with the repo
+analysis.md
+SOLID_Plan.md
+Units.md
+FileUtils/NCNotes.md
+
+# Local-only code, not meant to be published with the repo
+PID.py
+
+# Large data file -- exceeds GitHub's 100MB per-file push limit
+6a4d31ff-ff3d-23548.nc

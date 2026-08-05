@@ -1,21 +1,25 @@
 import numpy as np
 import pandas as pd
 import random
-import math
 import time
 import os
 import pymunk
-import pymunk.pygame_util
-import pygame
 
 # custom imports
 import utils
 from robot import *
+from visualizer import Visualizer
+from vector_field import VectorField
+from variable import Damping, Gravity, OceanCurrent, Drag
+from FileUtils.GetDimension import GetDimension
+from FileUtils.GetDT import GetDT
+from FileUtils.Scanner import Scanner
 
 ## PARAMETERS
 
 tag = "test" # change to save data under unique name
 VIZ = True
+nc_filename = "6a4d31ff-ff3d-23548.nc"
 
 ## GLOBAL STATE
 
@@ -26,26 +30,9 @@ sim_state = {
 
 ## METHODS
 
-# custom vector field velocity forcing function
-# arguments are fixed by pymunk
-def vector_field(body, gravity, damping, dt):
-    x,y = body.position
-    force_x = 0
-    # make force dependent on location and time
-    t = sim_state["time"]
-    force_y = 200*math.sin(t*y)
-
-    # apply standard damping to stabilize movement
-    body.velocity = body.velocity * damping
-
-    # calculate and apply acceleration
-    acceleration = pymunk.Vec2d(force_x, force_y) / body.mass
-    body.velocity += acceleration*dt
-
 def run():
     # Initialize parameters
     global_filename = "configs/global_config.yaml"
-    e_filename = "configs/env_config.yaml"
 
     datadir = './data'
     if not os.path.exists(datadir):
@@ -53,12 +40,27 @@ def run():
 
     # load configs
     gparams = utils.load_config(global_filename)
-    sim_time, ss, FPS = gparams["sim_time"], gparams["screen_size"], gparams["FPS"]
-    obs = utils.load_env(e_filename)
+    sim_time, FPS = gparams["sim_time"], gparams["FPS"]
+
+    # arena dimensions come from the .nc file's grid, not configs/global_config.yaml
+    width, height = GetDimension(nc_filename).get_max_dimensions()
+
+    # timing: dt comes from the .nc file's own model time-step, not FPS
+    dt = GetDT(nc_filename).get_dt()
 
     # set up environment
     space = pymunk.Space()
     space.gravity = 0, 0 # no gravity: top-down view
+
+    # generate boundary walls sized to (width, height); same shape/thickness
+    # convention as the old configs/env_config.yaml obstacles (no longer used)
+    wall_thickness = 10
+    obs = [
+        [[0, 0], [width, 0], [width, wall_thickness], [0, wall_thickness]],
+        [[0, 0], [0, height], [wall_thickness, height], [wall_thickness, 0]],
+        [[width, height], [0, height], [0, height - wall_thickness], [width, height - wall_thickness]],
+        [[width, height], [width, 0], [width - wall_thickness, 0], [width - wall_thickness, height]],
+    ]
     for poly in obs:
         # shift coordinates to be centered at zero
         polynp = np.array(poly)
@@ -70,21 +72,22 @@ def run():
         space.add(shape)
 
     # spawn robots
-    robot = Robot(global_filename)
+    robot = Robot(global_filename, width=width, height=height)
     robot.body.velocity = [gparams["robot_vel"],0.] # initial velocity vector
+    vector_field = VectorField(sim_state)
+    scanner = Scanner(nc_filename)
+    drag_coefficient = 0.001 # placeholder, not sourced from anywhere -- tune as needed
+    vector_field.add(Damping(space.damping))
+    vector_field.add(OceanCurrent(scanner, dt))
+    vector_field.add(Gravity(space.gravity.y, dt))
+    vector_field.add(Drag(drag_coefficient))
     robot.body.velocity_func = vector_field # set custom velocity function
     space.add(robot.body, robot.shape)
 
     # set up sim and vizualization
     sim_data = [] # for logging data
     if VIZ:
-        pygame.init()
-        screen = pygame.display.set_mode((ss,ss))
-        draw_options = pymunk.pygame_util.DrawOptions(screen)
-        clock = pygame.time.Clock()
-
-    # timing
-    dt = 1.0 / FPS
+        visualizer = Visualizer(width, height, FPS)
 
     ### Simulation Loop
 
@@ -99,17 +102,9 @@ def run():
         sim_data.append([robot.coords[0], robot.coords[1], robot.angle])
 
         if VIZ:
-            # fill the background with white
-            screen.fill((255,255,255))
-            space.debug_draw(draw_options)
-            c = robot.coords
-#            # draw a solid blue circle in the center
-#            pygame.draw.circle(screen, (0,0,255), np.ceil(c), 5)
-#            # draw a line to show orientation
-#            pygame.draw.line(screen, (0,0,255), np.ceil(c), np.ceil(c+15*np.array([np.cos(robot.angle),np.sin(robot.angle)])), 3)
-            # update the display
-            pygame.display.flip()
-            clock.tick(FPS)
+            running = visualizer.render(space, robot)
+            if not running:
+                break
 
     data = pd.DataFrame(data = sim_data, columns = ["x","y","theta"])
     outdat = os.path.join(datadir, tag+".csv")

@@ -2,7 +2,7 @@
 # All units are in pixels and discrete time iterations unless otherwise stated
 
 world:
-  sim_time: 10 # seconds
+  sim_time: 25 # seconds
   FPS: 30
   screen_size: 500
   grid_num: 50

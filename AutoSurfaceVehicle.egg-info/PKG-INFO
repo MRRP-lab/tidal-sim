@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: AutoSurfaceVehicle
+Version: 0.1.0
+Requires-Python: >3.9
+License-File: LICENSE
+Requires-Dist: pymunk
+Requires-Dist: pygame
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: pyyaml
+Dynamic: license-file
