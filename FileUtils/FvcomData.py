@@ -7,8 +7,9 @@ from FileUtils.OceanData import OceanData
 
 class FvcomData(OceanData):
     # FVCOM unstructured-mesh files (e.g. full-SSCOFS.nc). u/v live at
-    # triangle centers (lonc, latc) across 10 sigma depth layers; layer 0 is
-    # the surface (siglay runs from -0.016 at the top to -0.93 at the bottom)
+    # triangle centers (lonc, latc). "3D Full Profile" files have 10 sigma
+    # depth layers, and layer 0 is the surface (siglay runs from -0.016 at the
+    # top to -0.93 at the bottom); "Surface Only" files have no siglay at all
     SURFACE = 0
 
     def __init__(self, filename):
@@ -81,7 +82,9 @@ class FvcomData(OceanData):
 
     def _surface_pair(self, i):
         if i != self._pair_index:
-            snap = self.ds[["u", "v"]].isel(time=[i, i + 1], siglay=self.SURFACE)
+            snap = self.ds[["u", "v"]].isel(time=[i, i + 1])
+            if "siglay" in snap.sizes:
+                snap = snap.isel(siglay=self.SURFACE)
             self._pair = (snap.u.values, snap.v.values)
             self._pair_index = i
         return self._pair

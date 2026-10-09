@@ -24,7 +24,7 @@ from PID import PID
 tag = "test" # change to save data under unique name
 VIZ = True
 PROMPT = True # ask for the run length and spawn point at startup; False runs straight from the config
-nc_filename = "full-SSCOFS.nc"
+nc_filename = "6ac83e77-5549-12827.nc"
 
 ## GLOBAL STATE
 
