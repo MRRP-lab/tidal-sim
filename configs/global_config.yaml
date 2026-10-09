@@ -1,12 +1,42 @@
 # Global parameters for all sims
-# All units are in pixels and discrete time iterations unless otherwise stated
+# Positions are pixels and times are seconds; other units are stated per value
 
 world:
-  sim_time: 25 # seconds
+  sim_time: 250 # seconds
   FPS: 30
-  screen_size: 500
+  dt: 4. # physics time-step, seconds (ocean files are hourly snapshots; currents interpolate between them)
+  screen_size: 500 # run_sim.py: the arena's longer side; replay_sim.py: the square window
   grid_num: 50
+  log: true # save each run to data/<tag>.csv
+  seed: 0 # random spawn point when start is null; change it for a different start, keep it to repeat a run
+  # arena as [lon_min, lon_max, lat_min, lat_max], degrees with lon -180..180;
+  # null = the ocean file's whole extent. Default: Bellingham Bay and nearby channels
+  region: [-122.75, -122.40, 48.55, 48.80]
 
 robot:
-  robot_vel: 4.
+  robot_vel: 4. # not used yet -- meant for the PID, and will need to be in m/s
   noise_factor: 0.0138
+  start: [-122.66, 48.65] # spawn [lon, lat] (west of Lummi Island); must be on water. null = a random water point (from seed)
+  start_heading: 0. # degrees clockwise from north; ignored (random) when start is null
+  # quadratic water drag on the boat's velocity relative to the water, per metre:
+  # 0.5 * water density * drag coefficient * frontal area / mass. 0.85 is a rough
+  # estimate for a ~30 kg ASV (Cd 1, 0.05 m^2) -- tune to the real boat
+  drag_coefficient: 0.85
+  angular_drag: 100. # 1/s; how hard the hull resists turning -- placeholder, tuned with steering_force
+  lateral_drag_ratio: 20. # sideways water drag vs forward (a keel), so the boat turns instead of sliding
+
+# motor and waypoint steering. Forces are in pixel units for now (sizes aren't
+# realistic yet): with mass 1, forward_force 100 gives a top speed of ~1.5 px/s
+control:
+  waypoint: [-122.71, 48.70] # [lon, lat] the boat drives to; null = motor off, just drift
+  forward_force: 100. # pushes along the heading
+  reverse_force: 40. # pushes opposite the heading
+  steering_force: 30. # pushes the stern sideways, turning the boat
+  # PID gains. power: throttle (-1..1) from how far ahead the waypoint is, px;
+  # steer: steering (-1..1) from how far off the heading is, degrees. No anti-windup
+  power_kp: 0.05
+  power_ki: 0.
+  power_kd: 0.
+  steer_kp: 0.02
+  steer_ki: 0.
+  steer_kd: 0.

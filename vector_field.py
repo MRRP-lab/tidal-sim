@@ -1,3 +1,5 @@
+import pymunk
+
 from variable import VelocityEffect
 
 
@@ -19,8 +21,11 @@ class VectorField():
 
     # matches pymunk's required Body.velocity_func(body, gravity, damping, dt) signature
     def __call__(self, body, gravity, damping, dt):
+        # pymunk's own update first, so forces and torques applied to the
+        # body (apply_force_at_local_point, body.torque) still take effect
+        pymunk.Body.update_velocity(body, gravity, damping, dt)
         t = self.sim_state["time"]
         velocity = body.velocity
         for effect in self._forces:
-            velocity = effect.apply(t, velocity, body)
+            velocity = effect.apply(t, dt, velocity, body)
         body.velocity = velocity

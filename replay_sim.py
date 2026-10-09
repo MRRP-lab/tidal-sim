@@ -7,7 +7,6 @@ import os
 import glob
 
 import utils
-from robot import *
 
 ########################## PARAMETERS ###########################################
 
@@ -30,7 +29,7 @@ if SAVE_VID:
     os.makedirs(tag+"_frames")
 
 params = utils.load_config(global_filename)
-sim_time, ss, grid_num = params["sim_time"], params["screen_size"], params["grid_num"]
+ss, grid_num = params["screen_size"], params["grid_num"]
 obstacles = utils.load_env(e_filename)
 width = ss # for vid
 height = ss # for vid
@@ -135,19 +134,17 @@ class Grid():
 ########################## MAIN  ###########################################
 
 # init
-robot = Robot(global_filename)
-robot.coords = np.array([x_list,y_list]).T
-robot.angle = np.array(theta_list)
+coords = np.array([x_list,y_list]).T
+angles = np.array(theta_list)
 grid = Grid(ss, grid_num)
 
 # sim loop
 framenum = 0
 running = True
-# timing
-dt = 1.0 / FPS
 
 ### Animation Loop
-for time in range(int(sim_time/dt)):
+# one frame per logged physics step, so playback always matches the log's length
+for time in range(len(sim_data)):
     if(not running):
         break
     # did the user click the close button?
@@ -158,7 +155,7 @@ for time in range(int(sim_time/dt)):
     # fill the background with white
     screen.fill((255,255,255))
 
-    c = robot.coords[time]
+    c = coords[time]
     robotsPerGrid = grid.robotUpdates(c)
 
     for boxes in grid.robotsPer:
@@ -202,11 +199,11 @@ for time in range(int(sim_time/dt)):
     ############################################################################
 
     # update robot positions
-    c = robot.coords[time]
+    c = coords[time]
     # draw a solid blue circle in the center
     pygame.draw.circle(screen, (0,0,255), np.ceil(c), 5)
     # draw a line to show orientation
-    pygame.draw.line(screen, (0,0,255), np.ceil(c), np.ceil(c+15*np.array([np.cos(robot.angle[time]),np.sin(robot.angle[time])])), 3)
+    pygame.draw.line(screen, (0,0,255), np.ceil(c), np.ceil(c+15*np.array([np.cos(angles[time]),np.sin(angles[time])])), 3)
     # update the display
     pygame.display.flip()
     clock.tick(FPS)

@@ -117,12 +117,14 @@ def load_config(filename):
         with open(filename) as file:
             param_list = yaml.load(file,Loader=yaml.FullLoader)
 
-        # unpack yaml (sections in config are just for organization)
-        params = {k: float(v) for section in param_list
-                       for k, v in param_list[section].items()}
+        # unpack yaml (sections in config are just for organization); numbers
+        # become floats, anything else (lists, null, true/false) is kept as-is
+        params = {k: float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v
+                  for section in param_list
+                  for k, v in param_list[section].items()}
 
         # Data sanitization as needed
-        for key in ["sim_time", "screen_size", "grid_num", "FPS"]:
+        for key in ["sim_time", "screen_size", "grid_num", "FPS", "seed"]:
             params[key] = int(params[key])
 
         return params

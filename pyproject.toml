@@ -9,7 +9,8 @@ dependencies = [
     "pandas",
     "pyyaml",
     "xarray",
-    "netCDF4"
+    "netCDF4",
+    "scipy"
 ]
 
 [build-system]

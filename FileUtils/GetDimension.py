@@ -4,7 +4,7 @@ import xarray as xr
 class GetDimension:
     def __init__(self, filename):
         self.ds = xr.open_dataset(filename)
-
+        print(self.ds.sizes)
         # xi_* is each grid's column count (X), eta_* is its row count (Y) —
         # see FileUtils/NCNotes.md. The four spatial grids (rho/u/v/psi) are
         # staggered and don't all share the same shape, so take the max of
