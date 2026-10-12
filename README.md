@@ -17,6 +17,12 @@ Can install dependencies with:
 pip install -e .
 ```
 
+### Source Data Files
+
+Use the link below to request a dataset. Select all data types, entire domain, and whichever data profile you prefer (in 3D it just picks out the top layer)
+
+[https://opendap.co-ops.nos.noaa.gov/ofsdataagg/sscofs.html](https://opendap.co-ops.nos.noaa.gov/ofsdataagg/sscofs.html)
+
 ### Running Simulator
 
 Run `python run_sim.py`. This will cause an animation to pop up while the
@@ -37,5 +43,3 @@ We have separated generation of the simulation (`run_sim.py`) from
 visualization of the simulation (`replay_sim.py`). While pymunk is pretty
 efficient, at larger numbers of agents or more complex environments, the simulation
 cannot render in real time while also solving for the physics and interactions involved.
-
-In `replay_sim.py`, we've included trails to see where robots have been.
